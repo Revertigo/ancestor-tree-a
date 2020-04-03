@@ -1,3 +1,3 @@
-<div dir="rtl" lang="he">
+<div dir="rtl" lang="en">
 # Part A
 </div>
