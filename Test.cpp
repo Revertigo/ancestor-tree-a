@@ -10,16 +10,16 @@ TEST_CASE("Check the correctness of additions"){
     CHECK(T.relation("Apollo") == "me");
     CHECK(T.find("me") == "Apollo");
 
-    T.addFather("Apollo", "Zeus");
+    CHECK_NOTHROW(T.addFather("Apollo", "Zeus"));
     CHECK(T.relation("father") == "Zeus");
     CHECK(T.find("Zeus") == "father");
 
-    T.addMother("Apollo", "Leto");
+    CHECK_NOTHROW(T.addMother("Apollo", "Leto"));
     CHECK(T.relation("mother") == "Leto");
     CHECK(T.find("Leto") == "mother");
 
-    CHECK_THROWS(T.addFather("Apollo1", "Zeus1"));
-    CHECK_THROWS(T.addMother("Apollo2", "Leto2"));
+    CHECK_NOTHROW(T.addFather("Apollo1", "Zeus1"));//It is ok to override the father
+    CHECK_NOTHROW(T.addMother("Apollo2", "Leto2"));//It is ok to override the mother
     CHECK_THROWS(T.addFather("a", "b"));
 }
 
@@ -61,8 +61,9 @@ TEST_CASE("Check the correctness of find"){
     CHECK(T.find("great-grandfather") == "Avraham");
     CHECK(T.find("great-great-grandfather") == "Terah");
 
+    CHECK_THROWS(T.find("great-great-gr-grandfather"));//None valid input
+    CHECK_THROWS(T.find("great-great-grandmother"));//Valid input, none exists relation
     CHECK_THROWS(T.find("uncle"));
-    CHECK_NOTHROW(T.find("father"));
 }
 
 TEST_CASE("Check the correctness of remove 1") {
@@ -90,13 +91,13 @@ TEST_CASE("Check the correctness of remove 1") {
     CHECK(T.find("me") == "Judah");
     CHECK(T.find("father") == "Yaakov");
 
-    T.remove("Judah");
+    CHECK_THROWS(T.remove("Judah"));//Root of the tree, should throw exception
 
-    CHECK(T.relation("Judah") == "unrelated");
-    CHECK_THROWS(T.find("me"));
+    CHECK(T.relation("Judah") == "me");
+    CHECK(T.find("me") == "Judah");
 
-    CHECK(T.relation("Leha") == "unrelated");
-    CHECK_THROWS(T.find("mother"));
+    CHECK(T.relation("Leha") == "mother");
+    CHECK(T.find("mother") == "Leha");
 }
 
 TEST_CASE("Check the correctness of remove 2") {
@@ -147,46 +148,46 @@ TEST_CASE("Check the correctness of remove 3") {
             .addMother("Isaac", "Sarah")
             .addFather("Avraham", "Terah");
 
-    CHECK_THROWS(T.remove("Yahweh"));
-    CHECK_THROWS(T.remove("Yosef"));
+    CHECK_THROWS(T.remove("Yahweh"));//None existing nodes
+    CHECK_THROWS(T.remove("Yosef"));//None existing nodes
 
-    //Remove the whole tree
-    CHECK_NOTHROW(T.remove("Judah"));
+    //Remove the whole tree - root of the tree, should throw exception
+    CHECK_THROWS(T.remove("Judah"));
 
-    //Check all of them have been removed
-    CHECK(T.relation("Judah") == "unrelated");
-    CHECK_THROWS(T.find("Judah"));
+    //Check all of family still exists
+    CHECK(T.relation("Judah") == "me");
+    CHECK(T.find("me") == "Judah");
 
-    CHECK(T.relation("Yaakov") == "unrelated");
-    CHECK_THROWS(T.find("father"));
+    CHECK(T.relation("Yaakov") == "father");
+    CHECK(T.find("father") == "Yaakov");
 
-    CHECK(T.relation("Leha") == "unrelated");
-    CHECK_THROWS(T.find("mother"));
+    CHECK(T.relation("Leha") == "mother");
+    CHECK(T.find("mother") == "Leha");
 
-    CHECK(T.relation("Rivka") == "unrelated");
-    CHECK_THROWS(T.find("grandmother"));
+    CHECK(T.relation("Rivka") == "grandmother");
+    CHECK(T.find("grandmother") == "Rivka");
 
-    CHECK(T.relation("Isaac") == "unrelated");
-    CHECK_THROWS(T.find("grandfather"));
+    CHECK(T.relation("Isaac") == "grandfather");
+    CHECK(T.find("grandfather") == "Isaac");
 
-    CHECK(T.relation("Avraham") == "unrelated");
-    CHECK_THROWS(T.find("great-grandfather"));
+    CHECK(T.relation("Avraham") == "great-grandfather");
+    CHECK(T.find("great-grandfather") == "Avraham");
 
-    CHECK(T.relation("Avraham") == "unrelated");
-    CHECK_THROWS(T.find("great-grandfather"));
+    CHECK(T.relation("Sarah") == "great-grandmother");
+    CHECK(T.find("great-grandmother") == "Sarah");
 
-    CHECK(T.relation("Terah") == "unrelated");
-    CHECK_THROWS(T.find("great-great-grandfather"));
+    CHECK(T.relation("Terah") == "great-great-grandfather");
+    CHECK(T.find("great-great-grandfather") == "Terah");
 }
 
-TEST_CASE("Check the correctness of all API") {
+TEST_CASE("Check the correctness of whole API") {
     Tree T1("Rehoboam");
     Tree T2("Judah");
 
-    CHECK_THROWS(T1.remove("Yahweh"));
-    CHECK_THROWS(T2.remove("Yahweh"));
+    CHECK_THROWS(T1.remove("Yahweh"));//Non existing node
+    CHECK_THROWS(T2.remove("Yahweh"));//Non existing node
 
-    CHECK_NOTHROW(T1.remove("Rehoboam"));
+    CHECK_THROWS(T1.remove("Rehoboam"));//Root of the tree
     CHECK(T2.relation("Judah") == "me");
     CHECK(T2.find("me") == "Judah");
 
@@ -264,11 +265,14 @@ TEST_CASE("Check the correctness of all API") {
     CHECK(T1.find("grandfather") == "David");
     CHECK(T1.find("grandmother") == "Bathsheba");
 
+    CHECK_NOTHROW(T1.display());//call to display should always success
+
     //Check remove one by one
     CHECK_NOTHROW(T1.remove("David"));
     CHECK(T1.relation("David") == "unrelated");
     CHECK_THROWS(T1.find("grandfather"));
 
+    CHECK_THROWS(T1.remove(" Bathsheba "));//" Bathsheba " should not be exists
     CHECK_NOTHROW(T1.remove("Bathsheba"));
     CHECK(T1.relation("Bathsheba") == "unrelated");
     CHECK_THROWS(T1.find("grandmother"));
@@ -281,15 +285,16 @@ TEST_CASE("Check the correctness of all API") {
     CHECK(T1.relation("Naamah") == "unrelated");
     CHECK_THROWS(T1.find("mother"));
 
-    CHECK_NOTHROW(T1.remove("Rehoboam"));
-    CHECK(T1.relation("Rehoboam") == "unrelated");
-    CHECK_THROWS(T1.find("me"));
+    CHECK_THROWS(T1.remove(" Rehoboam"));//Root of the tree, throws exception
+    CHECK_THROWS(T1.remove("Rehoboam"));//Root of the tree, throws exception
+    CHECK(T1.relation("Rehoboam") == "me");
+    CHECK(T1.find("me") == "Rehoboam");
+
+    CHECK_NOTHROW(T1.display());//call to display should always success
 
     //Check add for none existing nodes
     CHECK_THROWS(T2.addFather("a", "b"));
     CHECK_THROWS(T2.addMother("b", "c"));
-
-    //Check add for none existing nodes for empty tree(should be OK)
-    CHECK_NOTHROW(T1.addFather("a", "B"));
-    CHECK_NOTHROW(T1.addMother("a", "b"));
+    CHECK_THROWS(T1.addFather("a", "B"));
+    CHECK_THROWS(T1.addMother("a", "b"));
 }
