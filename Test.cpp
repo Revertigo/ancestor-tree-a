@@ -1,9 +1,6 @@
 #include "doctest.h"
 #include "FamilyTree.hpp"
 using namespace family;
-using namespace std;
-
-#include <string>
 
 TEST_CASE("Check the correctness of additions"){
     Tree T("Apollo");
@@ -18,8 +15,8 @@ TEST_CASE("Check the correctness of additions"){
     CHECK(T.relation("mother") == "Leto");
     CHECK(T.find("Leto") == "mother");
 
-    CHECK_NOTHROW(T.addFather("Apollo1", "Zeus1"));//It is ok to override the father
-    CHECK_NOTHROW(T.addMother("Apollo2", "Leto2"));//It is ok to override the mother
+    CHECK_NOTHROW(T.addFather("Apollo", "Zeus1"));//It is ok to override the father
+    CHECK_NOTHROW(T.addMother("Apollo", "Leto2"));//It is ok to override the mother
     CHECK_THROWS(T.addFather("a", "b"));
 }
 
@@ -297,4 +294,14 @@ TEST_CASE("Check the correctness of whole API") {
     CHECK_THROWS(T2.addMother("b", "c"));
     CHECK_THROWS(T1.addFather("a", "B"));
     CHECK_THROWS(T1.addMother("a", "b"));
+
+    T2.addFather("Judah", "a")
+        .addFather("a", "b")
+        .addFather("b", "c")
+        .addFather("c", "d")
+        .addFather("d", "e")
+        .addFather("e", "f");
+    
+    CHECK(T2.relation("f") == "great-great-great-great-grandfather");
+    CHECK(T2.find("great-great-great-great-grandfather") == "f");
 }
